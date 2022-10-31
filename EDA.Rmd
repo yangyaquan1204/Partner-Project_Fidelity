@@ -1,0 +1,59 @@
+---
+title: "IMDB_TF_IDF"
+output: pdf_document
+date: "2022-10-25"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidytext)
+library(ggplot2)
+library(ggthemes)
+library(GGally)
+library(scales)
+library(dplyr)
+library(corrplot)
+library(PerformanceAnalytics)
+library(knitr)
+library(stringr)
+library(stringi)
+library(tm)
+library(pacman)
+p_load(tidyverse,tidytext,data.table,rio,jiebaR)
+```
+```{r}
+IMDB_data <- read.csv("C:/Users/86150/Desktop/675/Fidelity/imdb_top_1000.csv", header=T)
+head(IMDB_data) 
+    review <-tibble(IMDB_data$Overview)  %>% 
+  mutate(id = 1:n()) -> review
+```
+```{r}
+worker() -> rv
+
+review %>% 
+  mutate(words = map(IMDB_data$Overview,segment,jieba = rv)) %>% 
+  select(id,words) -> corpus 
+corpus
+```
+```{r}
+corpus %>% 
+  unnest() %>% 
+  count(id,words) -> f_table
+f_table
+```
+```{r}
+f_table %>%
+  bind_tf_idf(term = words,document = id,n = n) -> tf_idf_table
+
+tf_idf_table
+```
+```{r}
+tf_idf_table %>% 
+  group_by(id) %>% 
+  top_n(3,tf_idf) %>% 
+  ungroup() -> top3
+top3
+```
